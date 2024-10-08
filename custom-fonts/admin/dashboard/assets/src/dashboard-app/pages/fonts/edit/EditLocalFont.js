@@ -49,12 +49,26 @@ const EditLocalVariationItem = ({
 				}
 			);
 
-			//loop through the array and do things with each attachment
+			//loop through the array and do things with each attachment & Validate file extensions.
 			let fontFileNames = [];
 			for (let i = 0; i < attachments.length; ++i) {
-				fontFileNames.push(attachments[i].attributes.url);
+				// Check if the file extension is allowed
+				const allowedExtensions = ['.ttf', '.otf', '.woff', '.woff2', '.eot', '.svg'];
+				const fileName = attachments[i].attributes.url.toLowerCase();
+				const extension = fileName.substr(fileName.lastIndexOf('.'));
+				if (allowedExtensions.includes(extension)) {
+					fontFileNames.push(attachments[i].attributes.url);
+				} else {
+					// Reject the file upload and display an error message
+					alert(
+						__(
+							'Invalid file type. Only .ttf, .otf, .woff, .woff2, .svg files are allowed.',
+							'custom-fonts'
+						)
+					);
+					return;
+				}
 			}
-
 			setFontFileName( fontFileNames );
 			handleVariationChange(
 				event,
@@ -63,10 +77,9 @@ const EditLocalVariationItem = ({
 				fontFileNames
 			);
 		});
-
 		// Finally, open the modal on click
 		frame.open();
-	}
+	};
 
 	const expandFileField = (e) => {
 		e.preventDefault();
@@ -305,18 +318,24 @@ const EditLocalFont = ({fontId}) => {
 		formData.append( 'font_id', fontId );
 		formData.append( 'font_data', JSON.stringify( editFontData ) );
 
-		apiFetch( {
+		apiFetch({
 			url: bsf_custom_fonts_admin.ajax_url,
 			method: 'POST',
 			body: formData,
-		} ).then( (response) => {
-			if ( response.success ) {
-				setTimeout( () => {
-					window.location = `${ bsf_custom_fonts_admin.app_base_url }`;
-				}, 500 );
+		})
+		.then((response) => {
+			if (response.success) {
+				setTimeout(() => {
+					window.location = `${bsf_custom_fonts_admin.app_base_url}`;
+				}, 500);
 			}
-			setLoading( false );
-		} );
+			setLoading(false);
+		})
+		.catch((error) => {
+			console.error('Error during API request:', error);
+			setLoading(false);
+		});
+		
 	};
 
 	return (
